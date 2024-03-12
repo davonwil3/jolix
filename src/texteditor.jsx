@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
-import './TextEditor.css'; // Ensure CSS file exists
+import './TextEditor.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
 import AiPrompt from './components/aiprompt';
@@ -13,7 +13,7 @@ import io from 'socket.io-client';
 
 function TextEditor() {
     const [value, setValue] = useState('');
-    const quillRef = useRef(null); // Ref to attach Quill instance
+    const quillRef = useRef(null);
     const [prompt, setPrompt] = useState('');
     const [menuExpanded, setMenuExpanded] = useState(false);
     const [sidebarContent, setSidebarContent] = useState('');
@@ -79,10 +79,9 @@ function TextEditor() {
 
             if (response.data && response.data.result) {
                 const editor = quillRef.current.getEditor();
-                // Append the generated text to the end of the current content
                 const currentContent = editor.getContents();
                 const delta = editor.clipboard.convert(response.data.result);
-                editor.setContents(currentContent); // Reset to current content to maintain undo stack
+                editor.setContents(currentContent);
                 editor.updateContents(delta, 'user'); // Append new content
 
             }
@@ -111,42 +110,40 @@ function TextEditor() {
             indicator.classList.add('hidden');
         }
     }
- // Example using Socket.IO in a client-side application
 
 
-function startListening() {
-    console.log('Start listening...');
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-            // Connect to Socket.IO server
-            socket = io('http://localhost:3001');
 
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = function(event) {
-                if (event.data.size > 0) {
-                    socket.emit('audioData', event.data);
-                }
-            };
+    function startListening() {
+        console.log('Start listening...');
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                socket = io('http://localhost:3001');
 
-            mediaRecorder.start(1000); // Split the audio into chunks of 1 second
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = function (event) {
+                    if (event.data.size > 0) {
+                        socket.emit('audioData', event.data);
+                    }
+                };
 
-            // Handle transcription result
-            socket.on('transcription', (data) => {
-                console.log('Transcription:', data.transcription);
-                // Handle displaying transcription in the UI here
-            });
+                mediaRecorder.start(1000); // Split the audio into chunks of 1 second
 
-        }).catch(console.error);
-}
+                // Handle transcription result
+                socket.on('transcription', (data) => {
+                    console.log('Transcription:', data.transcription);
+                    
+                });
 
-function stopListening() {
-    console.log('Stop listening...');
-    if (mediaRecorder) {
-        mediaRecorder.stop();
-        // Send a message to the server indicating the end of the stream
-        socket.emit('endAudioStream', {});
+            }).catch(console.error);
     }
-}
+
+    function stopListening() {
+        console.log('Stop listening...');
+        if (mediaRecorder) {
+            mediaRecorder.stop();
+            socket.emit('endAudioStream', {});
+        }
+    }
 
 
     return (
