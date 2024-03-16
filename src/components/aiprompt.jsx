@@ -33,7 +33,7 @@ function AiPrompt(props) {
                 id="content-length"
                 style={{
                     width: '200px',
-                    height: '45px',
+                    height: '55px',
                     marginTop: '10px',
                     borderRadius: '5px',
                     border: '1px solid #ccc',

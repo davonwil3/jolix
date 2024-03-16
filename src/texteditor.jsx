@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import React, { useState, useRef, useEffect } from 'react';
 import './TextEditor.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUndo, faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -8,15 +8,19 @@ import AiPrompt from './components/aiprompt';
 import { faKeyboard } from '@fortawesome/free-regular-svg-icons';
 import axios from 'axios';
 import { faMicrophone } from '@fortawesome/pro-regular-svg-icons';
-import io from 'socket.io-client';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { faPenToSquare } from '@fortawesome/pro-regular-svg-icons';
+import Rephraseai from './components/rephraseai';
+import { faSpellCheck } from '@fortawesome/pro-regular-svg-icons';
 
 
 function TextEditor() {
     const [value, setValue] = useState('');
     const quillRef = useRef(null);
-    const [prompt, setPrompt] = useState('');
     const [menuExpanded, setMenuExpanded] = useState(false);
     const [sidebarContent, setSidebarContent] = useState('');
+    const [editorText, setEditorText] = useState('');
+    const [textGearsErrors, setTextGearsErrors] = useState([]);
     const editorStyles = {
         height: '125vh',
         width: '916px',
@@ -26,31 +30,106 @@ function TextEditor() {
         marginTop: '20px',
         marginLeft: 'auto',
         marginRight: 'auto',
-
     };
 
     useEffect(() => {
         // Register custom fonts and sizes
         const Font = ReactQuill.Quill.import('formats/font');
-        Font.whitelist = ['sans-serif', 'serif', 'monospace', 'georgia', 'comic-sans', 'arial', 'lucida', 'times-new-roman', 'courier-new', 'verdana'];
+        Font.whitelist = [
+            'sans-serif',
+            'serif',
+            'monospace',
+            'georgia',
+            'comic-sans',
+            'arial',
+            'lucida',
+            'times-new-roman',
+            'courier-new',
+            'verdana',
+        ];
         ReactQuill.Quill.register(Font, true);
 
         const Size = ReactQuill.Quill.import('attributors/style/size');
-        Size.whitelist = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px'];
+        Size.whitelist = [
+            '10px',
+            '12px',
+            '14px',
+            '16px',
+            '18px',
+            '20px',
+            '24px',
+            '30px',
+            '36px',
+        ];
         ReactQuill.Quill.register(Size, true);
     }, []);
 
+    useEffect(() => {
+        const quillContainer = quillRef.current.getEditor().container;
+        quillContainer.addEventListener('mouseover', handleMouseOver);
+    
+        function handleMouseOver(e) {
+            if (e.target.classList.contains('has-error')) {
+                const errorInfo = JSON.parse(e.target.getAttribute('data-error'));
+    
+                // Create tooltip element or use an existing one
+                let tooltip = document.getElementById('custom-tooltip');
+                if (!tooltip) {
+                    tooltip = document.createElement('div');
+                    tooltip.setAttribute('id', 'custom-tooltip');
+                    tooltip.style.position = 'absolute';
+                    tooltip.style.zIndex = 1000;
+                    tooltip.style.background = '#fff';
+                    tooltip.style.border = '1px solid #ccc';
+                    tooltip.style.padding = '5px';
+                    document.body.appendChild(tooltip);
+                }
+    
+                // Set tooltip content
+                tooltip.innerHTML = `
+                <div style="display: flex">
+                    <div style="text-decoration: line-through">${errorInfo.bad}</div>
+                    <div style="margin: 0 5px;">--></div>
+                    <div>${errorInfo.better}</div><br>
+                </div>
+                <small>${errorInfo.description}</small>
+            `;
+             
+    
+                // Position the tooltip
+                const rect = e.target.getBoundingClientRect();
+                tooltip.style.top = `${rect.top + window.scrollY + rect.height}px`;
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.display = 'flex';
+            }
+        }
+    
+        quillContainer.addEventListener('mouseout', function(e) {
+            if (e.target.classList.contains('has-error')) {
+                const tooltip = document.getElementById('custom-tooltip');
+                if (tooltip) {
+                    tooltip.style.display = 'none';
+                }
+            }
+        });
+    
+        return () => {
+            quillContainer.removeEventListener('mouseover', handleMouseOver);
+        };
+    }, []); // Adjust the dependency array as needed
+    
+
     const modules = {
         toolbar: {
-            container: "#toolbar",
+            container: '#toolbar',
         },
         history: {
             delay: 1000,
             maxStack: 50,
-            userOnly: true
-        }
-
+            userOnly: true,
+        },
     };
+
     const undo = () => {
         const quill = quillRef.current.getEditor();
         quill.history.undo();
@@ -60,176 +139,319 @@ function TextEditor() {
         const quill = quillRef.current.getEditor();
         quill.history.redo();
     };
+
     const expandMenu = (content) => {
         setMenuExpanded(!menuExpanded);
         setSidebarContent(content);
-
-    }
-
+    };
 
     const generateFromAI = async (promptai, size) => {
-        // Use the prompt state for the request
         try {
             console.log(promptai);
             console.log(process.env.REACT_APP_BACKEND_URL);
-            const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/generate-text`, {
-                prompt: promptai,
-                size: size
-            });
+            const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/generate-text`,
+                {
+                    prompt: promptai,
+                    size: size,
+                }
+            );
 
             if (response.data && response.data.result) {
                 const editor = quillRef.current.getEditor();
                 const currentContent = editor.getContents();
                 const delta = editor.clipboard.convert(response.data.result);
+                delta.ops.forEach(op => {
+                    if (op.insert && typeof op.insert === 'string') {
+                        op.attributes = { background: 'yellow' };
+                    }
+                });
                 editor.setContents(currentContent);
-                editor.updateContents(delta, 'user'); // Append new content
-
+                editor.updateContents(delta, 'user');
+                setTimeout(() => {
+                    const content = editor.getContents();
+                    content.ops.forEach(op => {
+                        if (op.attributes && op.attributes.background === 'yellow') {
+                            delete op.attributes.background;
+                        }
+                    });
+                    editor.setContents(content);
+                }, 3000);
             }
         } catch (error) {
             console.error('Error generating text:', error);
         }
     };
 
-    let mediaRecorder;
-    let ws;
-    let isListening = false;
-    let socket;
 
-    function toggleListening() {
-        isListening = !isListening;
+    const {
+        transcript,
+        listening,
+        browserSupportsSpeechRecognition,
+        resetTranscript,
+    } = useSpeechRecognition();
+    const lastTranscriptLength = useRef(0);
 
-        const indicator = document.getElementById('listeningIndicator');
+    const handleStartListening = () => {
+        SpeechRecognition.startListening({ continuous: true });
+    };
+
+    const [editorContent, setEditorContent] = useState('');
+
+    useEffect(() => {
+        setEditorContent(editorContent + transcript.slice(lastTranscriptLength.current));
+        lastTranscriptLength.current = transcript.length;
+    }, [transcript]);
+
+    useEffect(() => {
+        const quillEditor = quillRef.current.getEditor();
+        quillEditor.setText(editorContent);
+    }, [editorContent]);
+
+    if (!browserSupportsSpeechRecognition) {
+        return <p>Your browser does not support speech recognition.</p>;
+    }
+
+    const toggleListening = () => {
+        const listeningIndicator = document.getElementById('listeningIndicator');
         const audio = document.getElementById('buttonAudio');
-
-        if (isListening) {
-            startListening();
+        if (listeningIndicator.classList.contains('hidden')) {
+            listeningIndicator.classList.remove('hidden');
             audio.play();
-            indicator.classList.remove('hidden');
+            handleStartListening();
         } else {
-            stopListening();
-            indicator.classList.add('hidden');
+            listeningIndicator.classList.add('hidden');
+            SpeechRecognition.stopListening();
+        }
+    };
+
+    const rephraseFromAI = async (tone) => {
+        try {
+            console.log('rephrasing text');
+            const quillEditor = quillRef.current.getEditor();
+            quillEditor.focus();
+            const range = quillEditor.getSelection();
+
+
+            let selectedText = quillEditor.getText(range.index, range.length);
+            selectedText = selectedText.split(' ').slice(0, 350).join(' ');
+
+            if (selectedText.length === 0) {
+                alert('Please select some text to rephrase.');
+                return;
+            }
+
+            if (tone === '') {
+                let tone = 'neutral';
+            }
+
+            const response = await axios.post(
+                `${process.env.REACT_APP_BACKEND_URL}/rephrase-text`,
+                {
+                    prompt: `Reword the following text with a ${tone} tone:  ${selectedText}`,
+                }
+            );
+
+            if (response.data && response.data.result) {
+                const rephrasedText = response.data.result;
+                quillEditor.deleteText(range.index, range.length);
+                quillEditor.insertText(range.index, rephrasedText);
+                quillEditor.formatText(range.index, rephrasedText.length, 'background', 'yellow')
+                setTimeout(() => {
+                    quillEditor.formatText(range.index, rephrasedText.length, 'background', false);
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error rephrasing text:', error);
+        }
+    };
+
+
+    let Inline = Quill.import('blots/inline');
+
+    class CustomErrorBlot extends Inline {
+        static create(value) {
+            let node = super.create();
+            node.classList.add('has-error'); // Use this class to style and identify error spans
+            node.setAttribute('style', 'background-color: #ffdada;');
+            node.setAttribute('data-error-id', value.id);
+            node.setAttribute('data-error-description', value.description);
+            node.setAttribute('data-error', JSON.stringify(value)); // Store the entire error object for access on hover
+            return node;
+        }
+
+        static formats(node) {
+            return {
+                id: node.getAttribute('data-error-id'),
+                description: node.getAttribute('data-error-description'),
+            };
         }
     }
+    CustomErrorBlot.blotName = 'customerror'; // Make sure this is lowercase
+    CustomErrorBlot.tagName = 'span';
+
+    Quill.register(CustomErrorBlot, true);
 
 
+    const checkTextWithTextGears = async () => {
+        const text = quillRef.current.getEditor().getText();
+        const encodedParams = new URLSearchParams();
+        encodedParams.append('text', text);
 
-    function startListening() {
-        console.log('Start listening...');
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                socket = io('http://localhost:3001');
+        const options = {
+            method: 'POST',
+            url: 'https://textgears-textgears-v1.p.rapidapi.com/grammar',
+            headers: {
+                'content-type': 'application/x-www-form-urlencoded',
+                'X-RapidAPI-Key': process.env.REACT_APP_TEXTGEARS_API_KEY,
+                'X-RapidAPI-Host': 'textgears-textgears-v1.p.rapidapi.com'
+            },
+            data: encodedParams,
+        };
 
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = function (event) {
-                    if (event.data.size > 0) {
-                        socket.emit('audioData', event.data);
-                    }
-                };
-
-                mediaRecorder.start(1000); // Split the audio into chunks of 1 second
-
-                // Handle transcription result
-                socket.on('transcription', (data) => {
-                    console.log('Transcription:', data.transcription);
-                    
+        try {
+            const response = await axios.request(options);
+            if (response.data.status && response.data.response.errors.length > 0) {
+                const quillEditor = quillRef.current.getEditor();
+                response.data.response.errors.forEach((error, index) => {
+                    const errorId = `error_${index}_${new Date().getTime()}`;
+                    const errorValue = {
+                        id: errorId,
+                        bad: error.bad,
+                        better: error.better,
+                        description: error.description.en,
+                    };
+                    // Apply the custom blot to the error span
+                    quillEditor.formatText(error.offset, error.length, 'customerror', errorValue);
                 });
-
-            }).catch(console.error);
-    }
-
-    function stopListening() {
-        console.log('Stop listening...');
-        if (mediaRecorder) {
-            mediaRecorder.stop();
-            socket.emit('endAudioStream', {});
+            }
+        } catch (error) {
+            console.error('Error checking text with TextGears:', error);
         }
-    }
+    };
+
 
 
     return (
         <div className='editor-page'>
-            <div id="toolbar">
-                <span className="ql-formats">
-                    <button className="ql-undo" title="Undo" onClick={undo}><FontAwesomeIcon icon={faUndo} /></button>
-                    <button className="ql-redo" title="Redo" onClick={redo}><FontAwesomeIcon icon={faRedo} /></button>
-                    <span className="ql-formats" title="Font Type">
-                        <select className="ql-font">
-                            <option value="sans-serif">Sans Serif</option>
-                            <option value="serif">Serif</option>
-                            <option value="monospace">Monospace</option>
-                            <option value="georgia">Georgia</option>
-                            <option value="comic-sans">Comic Sans</option>
-                            <option value="arial">Arial</option>
-                            <option value="lucida">Lucida</option>
-                            <option value="times-new-roman">Times New Roman</option>
-                            <option value="courier-new">Courier New</option>
-                            <option value="verdana">Verdana</option>
+            <div id='toolbar'>
+                <span className='ql-formats'>
+                    <button className='ql-undo' title='Undo' onClick={undo}>
+                        <FontAwesomeIcon icon={faUndo} />
+                    </button>
+                    <button className='ql-redo' title='Redo' onClick={redo}>
+                        <FontAwesomeIcon icon={faRedo} />
+                    </button>
+                    <span className='ql-formats' title='Font Type'>
+                        <select className='ql-font'>
+                            <option value='sans-serif'>Sans Serif</option>
+                            <option value='serif'>Serif</option>
+                            <option value='monospace'>Monospace</option>
+                            <option value='georgia'>Georgia</option>
+                            <option value='comic-sans'>Comic Sans</option>
+                            <option value='arial'>Arial</option>
+                            <option value='lucida'>Lucida</option>
+                            <option value='times-new-roman'>Times New Roman</option>
+                            <option value='courier-new'>Courier New</option>
+                            <option value='verdana'>Verdana</option>
                         </select>
                     </span>
                 </span>
-                <span className="ql-formats" title="Font Size">
-                    <select className="ql-size" defaultValue="16px">
-                        <option value="10px">10px</option>
-                        <option value="12px">12px</option>
-                        <option value="14px">14px</option>
-                        <option value="16px">16px</option>
-                        <option value="18px">18px</option>
-                        <option value="20px">20px</option>
-                        <option value="24px">24px</option>
-                        <option value="30px">30px</option>
-                        <option value="36px">36px</option>
+                <span className='ql-formats' title='Font Size'>
+                    <select className='ql-size' defaultValue='16px'>
+                        <option value='10px'>10px</option>
+                        <option value='12px'>12px</option>
+                        <option value='14px'>14px</option>
+                        <option value='16px'>16px</option>
+                        <option value='18px'>18px</option>
+                        <option value='20px'>20px</option>
+                        <option value='24px'>24px</option>
+                        <option value='30px'>30px</option>
+                        <option value='36px'>36px</option>
                     </select>
                 </span>
-                <span className="ql-formats">
-                    <select className="ql-header" title="Header Size">
-                        <option value="" selected>Normal</option>
-                        <option value="1">Heading 1</option>
-                        <option value="2">Heading 2</option>
-                        <option value="3">Heading 3</option>
+                <span className='ql-formats'>
+                    <select className='ql-header' title='Header Size'>
+                        <option value='' selected>
+                            Normal
+                        </option>
+                        <option value='1'>Heading 1</option>
+                        <option value='2'>Heading 2</option>
+                        <option value='3'>Heading 3</option>
                     </select>
-                    <button className="ql-bold" title="Bold"></button>
-                    <button className="ql-italic" title="Italic"></button>
-                    <button className="ql-underline" title="Underline"></button>
-                    <select className="ql-color" title="Text Color"></select>
-                    <select className="ql-background" title="Background Color"></select>
-                    <button className="ql-list" value="ordered" title="Ordered List"></button>
-                    <button className="ql-list" value="bullet" title="Bullet List"></button>
-                    <select className="ql-align" title="Text Alignment">
-                        <option value="" selected>Align Left</option>
-                        <option value="center">Align Center</option>
-                        <option value="right">Align Right</option>
-                        <option value="justify">Justify</option>
+                    <button className='ql-bold' title='Bold'></button>
+                    <button className='ql-italic' title='Italic'></button>
+                    <button className='ql-underline' title='Underline'></button>
+                    <select className='ql-color' title='Text Color'></select>
+                    <select className='ql-background' title='Background Color'></select>
+                    <button className='ql-list' value='ordered' title='Ordered List'></button>
+                    <button className='ql-list' value='bullet' title='Bullet List'></button>
+                    <select className='ql-align' title='Text Alignment'>
+                        <option value='' selected>
+                            Align Left
+                        </option>
+                        <option value='center'>Align Center</option>
+                        <option value='right'>Align Right</option>
+                        <option value='justify'>Justify</option>
                     </select>
-                    <button className="ql-link" title="Insert Link"></button>
-                    <button className="ql-image" title="Insert Image"></button>
-                    <button className="ql-video" title="Insert Video"></button>
-                    <button className="ql-clean" title="Clear Formatting"></button>
+                    <button className='ql-link' title='Insert Link'></button>
+                    <button className='ql-image' title='Insert Image'></button>
+                    <button className='ql-video' title='Insert Video'></button>
+                    <button className='ql-clean' title='Clear Formatting'></button>
                 </span>
             </div>
-            <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    width: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
                 <div className={`menu ${menuExpanded ? 'menu-expanded' : ''}`}>
                     <div className='icons-wrapper'>
-                        <FontAwesomeIcon icon={faKeyboard} className='menu-icons' title="Generate AI Text" onClick={() => expandMenu("aiprompt")} />
-                        <FontAwesomeIcon icon={faMicrophone} className='menu-icons' title="Dictation" onClick={toggleListening} />
+                        <FontAwesomeIcon
+                            icon={faKeyboard}
+                            className='menu-icons'
+                            title='Generate AI Text'
+                            onClick={() => expandMenu('aiprompt')}
+                        />
+                        <FontAwesomeIcon
+                            icon={faMicrophone}
+                            className='menu-icons'
+                            title='Dictation'
+                            onClick={toggleListening}
+                        />
+                        <FontAwesomeIcon
+                            icon={faPenToSquare}
+                            className='menu-icons'
+                            title='rephrase'
+                            onClick={() => expandMenu('rephrase')}
+                        />
+                        <FontAwesomeIcon
+                            icon={faSpellCheck}
+                            className='menu-icons'
+                            title='Spell Check'
+                            onClick={checkTextWithTextGears}
+                        />
                     </div>
                     {sidebarContent === 'aiprompt' && menuExpanded && <AiPrompt func={generateFromAI} />}
-
-
+                    {sidebarContent === 'rephrase' && menuExpanded && <Rephraseai func={rephraseFromAI} />}
                 </div>
                 <ReactQuill
                     ref={quillRef}
-                    theme="snow"
+                    theme='snow'
                     value={value}
                     onChange={setValue}
                     style={editorStyles}
                     modules={modules}
                 />
-                <div id="listeningIndicator" class="listening-indicator hidden" onClick={toggleListening}>
+                <div id='listeningIndicator' className='listening-indicator hidden' onClick={toggleListening}>
                     <FontAwesomeIcon icon={faMicrophone} className='audio-icon' />
-                    <audio id='buttonAudio' src="/assets/bell.wav" preload='auto' style={{}}></audio>
+                    <audio id='buttonAudio' src='/assets/bell.wav' preload='auto' style={{}}></audio>
                 </div>
+               <div id='custom-tooltip'></div>
             </div>
-
         </div>
     );
 }
