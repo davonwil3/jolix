@@ -11,7 +11,7 @@ import { faMicrophone } from '@fortawesome/pro-regular-svg-icons';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { faPenToSquare } from '@fortawesome/pro-regular-svg-icons';
 import Rephraseai from './components/rephraseai';
-import { faSpellCheck } from '@fortawesome/pro-regular-svg-icons';
+import registerQuillSpellChecker from 'react-quill-spell-checker';
 
 
 function TextEditor() {
@@ -19,8 +19,9 @@ function TextEditor() {
     const quillRef = useRef(null);
     const [menuExpanded, setMenuExpanded] = useState(false);
     const [sidebarContent, setSidebarContent] = useState('');
-    const [editorText, setEditorText] = useState('');
-    const [textGearsErrors, setTextGearsErrors] = useState([]);
+    const [isSpellCheckMode, setIsSpellCheckMode] = useState(false);
+    const [summarizer, setSummarizer] = useState(true);
+    registerQuillSpellChecker(Quill)
     const editorStyles = {
         height: '125vh',
         width: '916px',
@@ -64,61 +65,6 @@ function TextEditor() {
         ReactQuill.Quill.register(Size, true);
     }, []);
 
-    useEffect(() => {
-        const quillContainer = quillRef.current.getEditor().container;
-        quillContainer.addEventListener('mouseover', handleMouseOver);
-    
-        function handleMouseOver(e) {
-            if (e.target.classList.contains('has-error')) {
-                const errorInfo = JSON.parse(e.target.getAttribute('data-error'));
-    
-                // Create tooltip element or use an existing one
-                let tooltip = document.getElementById('custom-tooltip');
-                if (!tooltip) {
-                    tooltip = document.createElement('div');
-                    tooltip.setAttribute('id', 'custom-tooltip');
-                    tooltip.style.position = 'absolute';
-                    tooltip.style.zIndex = 1000;
-                    tooltip.style.background = '#fff';
-                    tooltip.style.border = '1px solid #ccc';
-                    tooltip.style.padding = '5px';
-                    document.body.appendChild(tooltip);
-                }
-    
-                // Set tooltip content
-                tooltip.innerHTML = `
-                <div style="display: flex">
-                    <div style="text-decoration: line-through">${errorInfo.bad}</div>
-                    <div style="margin: 0 5px;">--></div>
-                    <div>${errorInfo.better}</div><br>
-                </div>
-                <small>${errorInfo.description}</small>
-            `;
-             
-    
-                // Position the tooltip
-                const rect = e.target.getBoundingClientRect();
-                tooltip.style.top = `${rect.top + window.scrollY + rect.height}px`;
-                tooltip.style.left = `${rect.left + window.scrollX}px`;
-                tooltip.style.display = 'flex';
-            }
-        }
-    
-        quillContainer.addEventListener('mouseout', function(e) {
-            if (e.target.classList.contains('has-error')) {
-                const tooltip = document.getElementById('custom-tooltip');
-                if (tooltip) {
-                    tooltip.style.display = 'none';
-                }
-            }
-        });
-    
-        return () => {
-            quillContainer.removeEventListener('mouseover', handleMouseOver);
-        };
-    }, []); // Adjust the dependency array as needed
-    
-
     const modules = {
         toolbar: {
             container: '#toolbar',
@@ -128,6 +74,13 @@ function TextEditor() {
             maxStack: 50,
             userOnly: true,
         },
+        spellChecker: {
+            allowIncomplete: true,
+            allowCompound: true,
+            language: 'en',
+            autoCheck: true,
+        },
+
     };
 
     const undo = () => {
@@ -242,7 +195,7 @@ function TextEditor() {
             }
 
             if (tone === '') {
-                let tone = 'neutral';
+                tone = 'neutral';
             }
 
             const response = await axios.post(
@@ -265,72 +218,6 @@ function TextEditor() {
             console.error('Error rephrasing text:', error);
         }
     };
-
-
-    let Inline = Quill.import('blots/inline');
-
-    class CustomErrorBlot extends Inline {
-        static create(value) {
-            let node = super.create();
-            node.classList.add('has-error'); // Use this class to style and identify error spans
-            node.setAttribute('style', 'background-color: #ffdada;');
-            node.setAttribute('data-error-id', value.id);
-            node.setAttribute('data-error-description', value.description);
-            node.setAttribute('data-error', JSON.stringify(value)); // Store the entire error object for access on hover
-            return node;
-        }
-
-        static formats(node) {
-            return {
-                id: node.getAttribute('data-error-id'),
-                description: node.getAttribute('data-error-description'),
-            };
-        }
-    }
-    CustomErrorBlot.blotName = 'customerror'; // Make sure this is lowercase
-    CustomErrorBlot.tagName = 'span';
-
-    Quill.register(CustomErrorBlot, true);
-
-
-    const checkTextWithTextGears = async () => {
-        const text = quillRef.current.getEditor().getText();
-        const encodedParams = new URLSearchParams();
-        encodedParams.append('text', text);
-
-        const options = {
-            method: 'POST',
-            url: 'https://textgears-textgears-v1.p.rapidapi.com/grammar',
-            headers: {
-                'content-type': 'application/x-www-form-urlencoded',
-                'X-RapidAPI-Key': process.env.REACT_APP_TEXTGEARS_API_KEY,
-                'X-RapidAPI-Host': 'textgears-textgears-v1.p.rapidapi.com'
-            },
-            data: encodedParams,
-        };
-
-        try {
-            const response = await axios.request(options);
-            if (response.data.status && response.data.response.errors.length > 0) {
-                const quillEditor = quillRef.current.getEditor();
-                response.data.response.errors.forEach((error, index) => {
-                    const errorId = `error_${index}_${new Date().getTime()}`;
-                    const errorValue = {
-                        id: errorId,
-                        bad: error.bad,
-                        better: error.better,
-                        description: error.description.en,
-                    };
-                    // Apply the custom blot to the error span
-                    quillEditor.formatText(error.offset, error.length, 'customerror', errorValue);
-                });
-            }
-        } catch (error) {
-            console.error('Error checking text with TextGears:', error);
-        }
-    };
-
-
 
     return (
         <div className='editor-page'>
@@ -428,16 +315,12 @@ function TextEditor() {
                             title='rephrase'
                             onClick={() => expandMenu('rephrase')}
                         />
-                        <FontAwesomeIcon
-                            icon={faSpellCheck}
-                            className='menu-icons'
-                            title='Spell Check'
-                            onClick={checkTextWithTextGears}
-                        />
+                      
                     </div>
                     {sidebarContent === 'aiprompt' && menuExpanded && <AiPrompt func={generateFromAI} />}
                     {sidebarContent === 'rephrase' && menuExpanded && <Rephraseai func={rephraseFromAI} />}
                 </div>
+                
                 <ReactQuill
                     ref={quillRef}
                     theme='snow'
@@ -445,12 +328,13 @@ function TextEditor() {
                     onChange={setValue}
                     style={editorStyles}
                     modules={modules}
+                    readOnly={isSpellCheckMode}
                 />
                 <div id='listeningIndicator' className='listening-indicator hidden' onClick={toggleListening}>
                     <FontAwesomeIcon icon={faMicrophone} className='audio-icon' />
                     <audio id='buttonAudio' src='/assets/bell.wav' preload='auto' style={{}}></audio>
                 </div>
-               <div id='custom-tooltip'></div>
+                
             </div>
         </div>
     );
