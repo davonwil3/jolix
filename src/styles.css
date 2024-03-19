@@ -4,25 +4,28 @@
     box-sizing: border-box;
     font-family: 'Roboto', sans-serif;
 }
-.authentication-page{
+
+.authentication-page {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background-color: #ece7e7;
 }
+
 .authentication-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 60vh;
-  width: 52vw;
-  background-color: white;
-  border-radius: 15px;
-  min-width: 1086px;
-  min-height: 670px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    width: 52vw;
+    background-color: white;
+    border-radius: 15px;
+    min-width: 1086px;
+    min-height: 670px;
 }
-.authentication-image{
+
+.authentication-image {
     background-color: orange;
     position: relative;
     height: 100%;
@@ -30,8 +33,9 @@
     border-radius: 15px 0 0 15px;
     background-size: cover;
     background-position: center;
-    
+
 }
+
 .authentication-image::before {
     content: "";
     position: absolute;
@@ -43,7 +47,7 @@
     border-radius: inherit;
 }
 
-.authentication-form-container{
+.authentication-form-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -53,7 +57,8 @@
     border-radius: 0 15px 15px 0;
     height: 100%;
 }
-.authentication-form{
+
+.authentication-form {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -61,41 +66,47 @@
     height: 70%;
     width: 72%;
     padding: 0 20px;
-    
-    
-    
+
+
+
 }
-.authentication-form h1{
+
+.authentication-form h1 {
     font-size: 42px;
     color: black;
     margin-bottom: 5px;
     align-self: flex-start;
 }
-.authentication-form p{
+
+.authentication-form p {
     font-size: 17px;
     color: #626161;
     margin-bottom: 28px;
     text-align: left;
     align-self: flex-start;
 }
-.form-group{
+
+.form-group {
     display: flex;
     flex-direction: column;
     width: 100%;
-    
+
 }
-.form-group input{
+
+.form-group input {
     padding: 10px;
     margin: 10px 0;
     border: 1px solid #ccc;
     border-radius: 5px;
 }
-.form-group label{
+
+.form-group label {
     font-size: 16px;
-    color: #626161; 
-    
+    color: #626161;
+
 }
-.form-group button{
+
+.form-group button {
     padding: 10px;
     margin: 10px 0;
     border: none;
@@ -105,13 +116,15 @@
     font-size: 16px;
     cursor: pointer;
 }
-.authentication-alt-signin{
+
+.authentication-alt-signin {
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-top: 30px;
 }
-.authentication-alt-signin button{
+
+.authentication-alt-signin button {
     padding: 10px;
     margin: 10px 0;
     border: none;
@@ -121,14 +134,16 @@
     font-size: 16px;
     cursor: pointer;
 }
-.authentication-alt-signin p{
+
+.authentication-alt-signin p {
     font-size: 19px;
     color: #626161;
     margin-bottom: 5px;
-    
-   
+
+
 }
-.create-account-ask{
+
+.create-account-ask {
     display: flex;
     flex-direction: row;
     align-self: flex-end;
@@ -138,12 +153,14 @@
     bottom: 75px;
     font-size: 13px;
     color: #626161;
-    
+
 }
-.create-account-ask button{
+
+.create-account-ask button {
     padding: 10px;
     margin: 10px 0;
-    border: 1px solid #626161;;
+    border: 1px solid #626161;
+    ;
     border-radius: 5px;
     background-color: white;
     height: 35px;
@@ -155,7 +172,8 @@
     font-size: 13px;
     color: #626161;
 }
-.editor-container{
+
+.editor-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -163,7 +181,8 @@
     background-color: #ece7e7;
     width: 100%;
 }
-.editor-page{
+
+.editor-page {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -172,7 +191,8 @@
     height: 140vh;
     background-color: #F8F8F8;
 }
-#toolbar{
+
+#toolbar {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -184,7 +204,8 @@
     padding-left: 5%;
 
 }
-.menu{
+
+.menu {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -193,17 +214,19 @@
     height: 100%;
     width: 5%;
     transition: width 0.4s;
-    border-right:1px solid #EDEDED;
-    position: relative; 
+    border-right: 1px solid #EDEDED;
+    position: relative;
     padding-top: 20px;
 }
-.menu-icons{
+
+.menu-icons {
     font-size: 23px;
     cursor: pointer;
     margin-bottom: 30px;
-   
+
 }
-.icons-wrapper{
+
+.icons-wrapper {
     display: flex;
     flex-direction: column;
     top: 100px;
@@ -211,27 +234,32 @@
     position: fixed;
     z-index: 100;
 }
+
 .menu-expanded {
-    width: 30%; /* expanded width */
+    width: 30%;
+    /* expanded width */
 }
-.ai-prompt{
+
+.ai-prompt {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
     height: 35%;
-    width: 62%;
+    width: 320px;
     position: fixed;
     margin-left: 27px;
-    
+
 }
-.ai-prompt h1{
+
+.ai-prompt h1 {
     font-size: 22px;
     color: black;
     text-align: center;
     margin-bottom: 13px;
 }
-.menu-submit-button{
+
+.menu-submit-button {
     padding: 10px;
     margin: 10px 0;
     border: none;
@@ -243,6 +271,7 @@
     width: 120px;
     height: 35px;
 }
+
 .listening-indicator {
     width: 75px;
     height: 75px;
@@ -257,56 +286,63 @@
     animation: pulse 2s infinite;
     animation-duration: 1.1s;
     opacity: 0.5;
-  }
+}
+
 .hidden {
     display: none;
 }
-.audio-icon{
+
+.audio-icon {
     font-size: 20px;
     color: white;
     cursor: pointer;
 }
-  
-  /* Keyframes for the pulsing effect */
+
+/* Keyframes for the pulsing effect */
 @keyframes pulse {
     0% {
         transform: scale(0.85);
         opacity: 0.7;
     }
+
     70% {
         transform: scale(.95);
         opacity: 1;
     }
+
     100% {
         transform: scale(0.85);
         opacity: 0.7;
     }
 }
 
-.rephrase{
+.rephrase {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
     height: 25%;
-    width: 19%;
+    width: 320px;
     position: fixed;
     margin-left: 27px;
 }
-.rephrase h1{
+
+.rephrase h1 {
     font-size: 22px;
     color: black;
     text-align: center;
     margin-bottom: 13px;
 }
-.rephrase p{
+
+.rephrase p {
     font-size: 17px;
     color: #626161;
     margin-bottom: 28px;
-    text-align: left;
+    text-align: center;
     align-self: flex-start;
 }
-#custom-tooltip{
+
+#custom-tooltip {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -319,49 +355,54 @@
     border: 1px solid #ccc;
     border-radius: 5px;
     padding: 10px;
-    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
     font-size: 23px;
     display: none;
     text-align: left;
-    
+
 }
-#custom-tooltip small{
+
+#custom-tooltip small {
     font-size: 15px;
     color: #626161;
     margin-bottom: 28px;
     margin-top: 10px;
 }
-.summarizer-page{
+
+.summarizer-page {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
     width: 100%;
     height: 140vh;
+    background-color: #F8F8F8;
 
 }
-.summarizer-page h1{
-    font-size: 80px;
+
+.summarizer-page h1 {
+    font-size: 65px;
     color: black;
     margin-bottom: 5px;
-    background-image: linear-gradient(#764BA2, #576ed3); 
+    background-image: linear-gradient(#764BA2, #576ed3);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    margin-top: 65px;
 }
 
-.summarizer-description{
+.summarizer-description {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 600px;
-   font-size: 17px;
+    font-size: 17px;
     color: #605f5f;
     margin-top: 14px;
     text-align: center;
 }
 
-.summarizer-form{
+.summarizer-form {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -372,30 +413,110 @@
 
 .input-wrapper {
     display: flex;
-    align-items: center; 
+    align-items: center;
     width: 100%;
-    position: relative; 
+    position: relative;
 }
 
-.input-url{
+.input-url {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
-    flex: 1; 
-    padding-right: 50px; 
+    flex: 1;
+    padding-right: 50px;
 }
 
 .icon-button {
     background: none;
     border: none;
     cursor: pointer;
-    position: absolute; 
+    position: absolute;
     right: 10px;
-    top: 50%; 
-    transform: translateY(-50%); 
+    top: 50%;
+    transform: translateY(-50%);
 }
 
-  
+.summaries-list {
+    display: flex;
+    flex-direction: column;
+    width: 550px;
+    max-height: 250px;
+    overflow-y: scroll;
 
-  
+}
+
+.summary-item {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+
+}
+
+.selected-summary {
+    background-color: #F8F8F8;
+    border: 1px solid #ccc;
+    width: 710px;
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+}
+
+.citations {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    width: 320px;
+    position: fixed;
+    margin-left: 27px;
+}
+.citations h1 {
+    font-size: 22px;
+    color: black;
+    text-align: center;
+    margin-bottom: 13px;
+}
+.inputs-citation{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 290px;
+}
+.inputs-citation input{
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size:15px ;
+}
+.citations label{
+    font-size: 16px;
+    color: #626161;
+}
+.citation-result{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 290px;
+    margin-top: 10px;
+}
+.citation-result label{
+    font-size: 16px;
+    color: #626161;
+}
+.citation-result textarea{
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size:15px ;
+
+}

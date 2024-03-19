@@ -12,6 +12,13 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { faPenToSquare } from '@fortawesome/pro-regular-svg-icons';
 import Rephraseai from './components/rephraseai';
 import registerQuillSpellChecker from 'react-quill-spell-checker';
+import { faBook } from '@fortawesome/pro-regular-svg-icons';
+import Modal from 'react-modal';
+import Summarizer from './summarizer';
+import { faQuoteLeft } from '@fortawesome/pro-regular-svg-icons';
+import Citations from './components/citations';
+
+
 
 
 function TextEditor() {
@@ -20,7 +27,8 @@ function TextEditor() {
     const [menuExpanded, setMenuExpanded] = useState(false);
     const [sidebarContent, setSidebarContent] = useState('');
     const [isSpellCheckMode, setIsSpellCheckMode] = useState(false);
-    const [summarizer, setSummarizer] = useState(true);
+    const [modalIsOpen, setModalIsOpen] = useState(false);
+
     registerQuillSpellChecker(Quill)
     const editorStyles = {
         height: '125vh',
@@ -64,6 +72,8 @@ function TextEditor() {
         ];
         ReactQuill.Quill.register(Size, true);
     }, []);
+
+  
 
     const modules = {
         toolbar: {
@@ -139,9 +149,7 @@ function TextEditor() {
 
     const {
         transcript,
-        listening,
         browserSupportsSpeechRecognition,
-        resetTranscript,
     } = useSpeechRecognition();
     const lastTranscriptLength = useRef(0);
 
@@ -312,15 +320,29 @@ function TextEditor() {
                         <FontAwesomeIcon
                             icon={faPenToSquare}
                             className='menu-icons'
-                            title='rephrase'
+                            title='Rephraser'
                             onClick={() => expandMenu('rephrase')}
                         />
-                      
+                        <FontAwesomeIcon
+                            icon={faBook}
+                            className='menu-icons'
+                            title='Summarize'
+                            onClick={() => setModalIsOpen(true)}
+                        />
+                        <FontAwesomeIcon 
+                            icon={faQuoteLeft} 
+                            className='menu-icons'
+                            title='Citation Generator'
+                            onClick={() => expandMenu('citation')}
+                        />
+                        
+
                     </div>
                     {sidebarContent === 'aiprompt' && menuExpanded && <AiPrompt func={generateFromAI} />}
                     {sidebarContent === 'rephrase' && menuExpanded && <Rephraseai func={rephraseFromAI} />}
+                    {sidebarContent === 'citation' && menuExpanded && <Citations />}
                 </div>
-                
+
                 <ReactQuill
                     ref={quillRef}
                     theme='snow'
@@ -329,12 +351,38 @@ function TextEditor() {
                     style={editorStyles}
                     modules={modules}
                     readOnly={isSpellCheckMode}
+                    
                 />
+
+                <Modal
+                    isOpen={modalIsOpen}
+                    onRequestClose={() => setModalIsOpen(false)}
+                    style={{
+                        content: {
+                            width: '60%',
+                            height: '90%',
+                            margin: 'auto',
+                            border: 'unset',
+                            borderRadius: '10px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            overflowY: 'auto',
+                        },
+                        overlay: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)', // This will give a black background with 50% opacity
+                        },
+                    }}
+                >
+                    <Summarizer />
+                </Modal>
+                                
                 <div id='listeningIndicator' className='listening-indicator hidden' onClick={toggleListening}>
                     <FontAwesomeIcon icon={faMicrophone} className='audio-icon' />
                     <audio id='buttonAudio' src='/assets/bell.wav' preload='auto' style={{}}></audio>
                 </div>
-                
+
             </div>
         </div>
     );
