@@ -5,7 +5,7 @@ import './styles.css';
 import Signin from './signin.jsx';
 import SignUp from './signup.jsx';
 import TextEditor from './texteditor.jsx';
-import Summarizer from './summarizer.jsx';
+
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -15,7 +15,6 @@ root.render(
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/texteditor" element={<TextEditor />} />
-        <Route path="/summarizer" element={<Summarizer />} />
         <Route path="/" element={<TextEditor />} />
       </Routes>
     </Router>
