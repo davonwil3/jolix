@@ -17,6 +17,7 @@ import Modal from 'react-modal';
 import Summarizer from './summarizer';
 import { faQuoteLeft } from '@fortawesome/pro-regular-svg-icons';
 import Citations from './components/citations';
+import { faMessageBot } from '@fortawesome/pro-regular-svg-icons';
 
 
 
@@ -209,7 +210,7 @@ function TextEditor() {
             const response = await axios.post(
                 `${process.env.REACT_APP_BACKEND_URL}/rephrase-text`,
                 {
-                    prompt: `Reword the following text with a ${tone} tone:  ${selectedText}`,
+                    prompt: `Reword the following text with a ${tone} tone keep formatting:  ${selectedText}`,
                 }
             );
 
@@ -334,6 +335,12 @@ function TextEditor() {
                             className='menu-icons'
                             title='Citation Generator'
                             onClick={() => expandMenu('citation')}
+                        />
+                        <FontAwesomeIcon 
+                        icon={faMessageBot} 
+                        className='menu-icons'
+                        title='Chatbot'
+
                         />
                         
 

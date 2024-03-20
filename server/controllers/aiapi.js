@@ -1,29 +1,40 @@
+
+
 const axios = require('axios');
 const cheerio = require('cheerio');
+
 
 
 const generateText = async (req, res) => {
     try {
         const { prompt } = req.body;
         const { size } = req.body;
+        let maxTokens = 150;
+       
+
+     
 
         if (size === 'Short') {
-            maxTokens = 150;
+            maxTokens = 300;
+           
+
         } else if (size === 'Medium') {
-            maxTokens = 400;
+            maxTokens = 550;
+           
         }
         else if (size === 'Long') {
-            maxTokens = 750;
+            maxTokens = 1100;
+            
         }
-        else {
-            maxTokens = 150;
-        }
+        
+        console.log(maxTokens);
+        let promptString = 'generate content for the following prompt : ' + prompt;
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: "gpt-3.5-turbo-0125",
             messages: [
                 {
                     role: "user",
-                    content: prompt
+                    content: promptString
                 }
             ],
             max_tokens: maxTokens,
