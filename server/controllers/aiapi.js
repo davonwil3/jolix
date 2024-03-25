@@ -1,32 +1,29 @@
-
-
 const axios = require('axios');
 const cheerio = require('cheerio');
-
-
+const OpenAI = require('openai');
+const { use } = require('../routes/airoutes');
+const openai = new OpenAI(process.env.OPENAI_API_KEY)
+const User = require('../models/schemas').User;
+const Project = require('../models/schemas').Project;
 
 const generateText = async (req, res) => {
     try {
         const { prompt } = req.body;
         const { size } = req.body;
         let maxTokens = 150;
-       
-
-     
-
         if (size === 'Short') {
             maxTokens = 300;
-           
+
 
         } else if (size === 'Medium') {
             maxTokens = 550;
-           
+
         }
         else if (size === 'Long') {
             maxTokens = 1100;
-            
+
         }
-        
+
         console.log(maxTokens);
         let promptString = 'generate content for the following prompt : ' + prompt;
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
@@ -206,9 +203,58 @@ async function generateCitation(req, res) {
     }
 }
 
+
+async function chatbot(req, res) {
+    const {username} = req.body;  
+
+    try {
+        let user = await User.findOne({username: username});
+
+        let threadId = user.projects[0].chat;
+
+        if (!threadId) {
+            console.log('Creating new thread...');
+            const thread = await openai.beta.threads.create();
+            threadId = thread.id;
+            user.projects[0].chat = threadId;
+            await user.save();
+        }
+
+        const threadMessages = await openai.beta.threads.messages.create(
+            threadId,
+            { role: "user", content: req.body.message }
+        );
+
+        const run = await openai.beta.threads.runs.create(
+            threadId,
+            { assistant_id: "asst_CAW4Dp3Tu88eLh5RqlInzRNv" }
+        );
+
+        console.log(threadId);
+        while (true) {
+            console.log('Checking thread status...' + threadId);
+            const runStatus = await openai.beta.threads.runs.retrieve(threadId, run.id);
+            console.log(JSON.stringify(runStatus.model_dump_json, null, 4));
+            if (runStatus.status === 'completed') {
+                const messages = await openai.beta.threads.messages.list(threadId);
+                console.log(messages.data[0].content[0].text.value + 'this is first message');
+                break;
+            } else {
+                // Sleep again
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+    } catch (err) {
+        console.error('Error finding user:', err);
+        return res.status(500).send('Failed to find user');
+    }
+}
+
+
 module.exports = {
     generateText,
     rephraseText,
     summarize,
-    generateCitation
+    generateCitation,
+    chatbot
 };

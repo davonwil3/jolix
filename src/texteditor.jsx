@@ -17,8 +17,9 @@ import Modal from 'react-modal';
 import Summarizer from './summarizer';
 import { faQuoteLeft } from '@fortawesome/pro-regular-svg-icons';
 import Citations from './components/citations';
-import { faMessageBot } from '@fortawesome/pro-regular-svg-icons';
-
+import { faRobot } from '@fortawesome/pro-regular-svg-icons';
+import Chatbot from './components/chatbot';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -29,6 +30,9 @@ function TextEditor() {
     const [sidebarContent, setSidebarContent] = useState('');
     const [isSpellCheckMode, setIsSpellCheckMode] = useState(false);
     const [modalIsOpen, setModalIsOpen] = useState(false);
+   
+
+
 
     registerQuillSpellChecker(Quill)
     const editorStyles = {
@@ -337,9 +341,10 @@ function TextEditor() {
                             onClick={() => expandMenu('citation')}
                         />
                         <FontAwesomeIcon 
-                        icon={faMessageBot} 
+                        icon={faRobot} 
                         className='menu-icons'
                         title='Chatbot'
+                        onClick={() => expandMenu('chatbot')}
 
                         />
                         
@@ -348,6 +353,9 @@ function TextEditor() {
                     {sidebarContent === 'aiprompt' && menuExpanded && <AiPrompt func={generateFromAI} />}
                     {sidebarContent === 'rephrase' && menuExpanded && <Rephraseai func={rephraseFromAI} />}
                     {sidebarContent === 'citation' && menuExpanded && <Citations />}
+                    <div className='expand-menu-container' style={{ display: sidebarContent === 'chatbot' && menuExpanded ? 'block' : 'none' }}>
+                        <Chatbot />
+                    </div>
                 </div>
 
                 <ReactQuill

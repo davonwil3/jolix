@@ -14,7 +14,7 @@ root.render(
       <Routes>
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/texteditor" element={<TextEditor />} />
+        <Route path="/document/:documentId" element={<TextEditor />} />
         <Route path="/" element={<TextEditor />} />
       </Routes>
     </Router>
